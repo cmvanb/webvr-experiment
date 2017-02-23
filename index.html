@@ -1,61 +1,179 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>WebVRExperiment</title>
     <meta name="description" content="WebVRExperiment">
-    <script src="libs/aframe/aframe-master.js"></script>
+    <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
+    <script src="node_modules/aframe-physics-system/dist/aframe-physics-system.js"></script>
     <script src="src/components/aabb-collider.js"></script>
     <script src="src/components/grab.js"></script>
     <script src="src/components/ground.js"></script>
     <script src="src/shaders/skyGradient.js"></script>
-  </head>
-  <body>
-    <a-scene fog="color: #bc483e; near: 0; far: 65;">
-      <a-assets>
-        <a-mixin id="cube"
-                 geometry="primitive: box; height: 0.30; width: 0.30; depth: 0.30"
-                 material="color: #EF2D5E;"></a-mixin>
-        <a-mixin id="cube-collided"
-                 material="color: #F2E646;"></a-mixin>
-        <a-mixin id="cube-grabbed"
-                 material="color: #F2E646;"></a-mixin>
-      </a-assets>
-      <!-- Hands -->
-      <a-entity hand-controls="left" aabb-collider="objects: .cube;" grab></a-entity>
-      <a-entity hand-controls="right" aabb-collider="objects: .cube;" grab></a-entity>
+</head>
+<body>
+    <a-scene 
+        fog="color: #bc483e; near: 0; far: 65;"
+        physics="debug: true; gravity: -9.8"
+        >
 
-      <!-- A-Frame cubes -->
-      <a-entity position="0 0 -0.5">
-        <a-entity class="cube" mixin="cube" position="0.30 1.65 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0 1.95 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.30 1.65 0"></a-entity>
+        <!-- Player 
+        <a-entity
+            camera
+            look-controls
+            wasd-controls
+            position="0 0.5 2"
+            ></a-entity>
+-->
 
-        <a-entity class="cube" mixin="cube" position="0.60 1.35 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0.60 1.05 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0.60 0.75 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0.60 0.45 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0.60 0.15 0"></a-entity>
-
-        <a-entity class="cube" mixin="cube" position="0.30 0.75 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="0 0.75 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.30 0.75 0"></a-entity>
-
-        <a-entity class="cube" mixin="cube" position="-0.60 1.35 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.60 1.05 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.60 0.75 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.60 0.45 0"></a-entity>
-        <a-entity class="cube" mixin="cube" position="-0.60 0.15 0"></a-entity>
+        <!-- Hands -->
+        <a-entity 
+            vive-controls="hand: left" 
+            aabb-collider="objects: .cube;" 
+            grab
+            ></a-entity>
+        <a-entity 
+            vive-controls="hand: right" 
+            aabb-collider="objects: .cube;" 
+            grab
+            ></a-entity>
 
         <!-- Environment -->
-        <a-entity id="sky"
-                  geometry="primitive: sphere; radius: 65;"
-                  material="shader: skyGradient; colorTop: #353449; colorBottom: #BC483E; side: back"></a-entity>
-         <a-entity ground></a-entity>
-         <a-entity light="type: point; color: #f4f4f4; intensity: 0.2; distance: 0" position="8 10 18"></a-entity>
-         <a-entity light="type: point; color: #f4f4f4; intensity: 0.6; distance: 0" position="-8 10 -18"></a-entity>
-         <a-entity light="type: ambient; color: #f4f4f4; intensity: 0.4;" position="-8 10 -18"></a-entity>
-      </a-entity>
+        <a-entity 
+            id="sky"
+            geometry="primitive: sphere; radius: 65;"
+            material="shader: skyGradient; colorTop: #3f97db; colorBottom: #d8f6ff; side: back"
+            ></a-entity>
+        <a-box
+            id="floor"
+            width="75"
+            height="1"
+            depth="75"
+            position="0 -0.2 0"
+            color="#dbd195"
+            static-body
+            ></a-box>
+        <a-entity 
+            light="type: ambient; color: #542a8c; intensity: 0.5;" 
+            ></a-entity>
+        <a-entity 
+            light="type: point; color: #f2cc26; intensity: 0.9;" 
+            position="0 5 0"
+            ></a-entity>
+
+        <!-- Physics -->
+        <a-box 
+            class="cube" 
+            mixin="cube" 
+            color="#00FF00"
+            position="-2 2.5 -2" 
+            ></a-box>
+        <a-box 
+            color="#00FF00"
+            position="-2 1 -2" 
+            ></a-box>
+
+        <!-- Assets -->
+        <a-assets>
+            <a-mixin 
+                id="cube"
+                geometry="primitive: box; height: 0.30; width: 0.30; depth: 0.30"
+                material="color: #EF2D5E;"
+                dynamic-body
+                ></a-mixin>
+            <a-mixin 
+                id="cube-collided"
+                material="color: #F2E646;"
+                ></a-mixin>
+            <a-mixin 
+                id="cube-grabbed"
+                material="color: #F2E646;"
+                ></a-mixin>
+        </a-assets>
+
+
+        <!-- A-Frame cubes -->
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.30 1.65 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0 1.95 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.30 1.65 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.60 1.35 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.60 1.05 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.60 0.75 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.60 0.45 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.60 0.15 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0.30 0.75 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="0 0.75 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.30 0.75 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.60 1.35 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.60 1.05 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.60 0.75 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.60 0.45 0"
+            ></a-entity>
+        <a-entity 
+            class="cube" 
+            mixin="cube" 
+            position="-0.60 0.15 0"
+            ></a-entity>
+
     </a-scene>
-  </body>
+</body>
 </html>
