@@ -27,6 +27,9 @@ AFRAME.registerComponent('grab',
         this.onGripDown = this.onGripDown.bind(this);
 
         this.onTrackpadMoved = this.onTrackpadMoved.bind(this);
+
+        this.onTriggerChanged = this.onTriggerChanged.bind(this);
+        this.onTrackpadChanged = this.onTrackpadChanged.bind(this);
     },
 
     play: function () 
@@ -48,6 +51,9 @@ AFRAME.registerComponent('grab',
         el.addEventListener('gripdown', this.onGripDown);
 
         el.addEventListener('trackpadmoved', this.onTrackpadMoved);
+
+        el.addEventListener('triggerchanged', this.onTriggerChanged);
+        el.addEventListener('trackpadchanged', this.onTrackpadChanged);
     },
 
     pause: function () 
@@ -69,6 +75,9 @@ AFRAME.registerComponent('grab',
         el.removeEventListener('gripdown', this.onGripDown);
 
         el.removeEventListener('trackpadmoved', this.onTrackpadMoved);
+
+        el.removeEventListener('triggerchanged', this.onTriggerChanged);
+        el.removeEventListener('trackpadchanged', this.onTrackpadChanged);
     },
 
     onGripClose: function (evt) 
@@ -76,6 +85,7 @@ AFRAME.registerComponent('grab',
         this.grabbing = true;
 
         delete this.previousPosition;
+        delete this.previousRotation;
 
         console.log("onGripClose");
     },
@@ -99,10 +109,14 @@ AFRAME.registerComponent('grab',
 
         if (hitElBody)
         {
-            hitElBody.mass = 5;
             hitElBody.velocity.x = this.deltaPosition.x * 100;
             hitElBody.velocity.y = this.deltaPosition.y * 100;
             hitElBody.velocity.z = this.deltaPosition.z * 100;
+
+            // TODO: Use the body's actual mass, not magic number 5.
+            hitElBody.mass = 5;
+
+            // TODO: Consider adding angular velocity.
         }
 
         this.hitEl = undefined;
@@ -159,11 +173,24 @@ AFRAME.registerComponent('grab',
         console.log(evt);
     },
 
+    onTriggerChanged: function (evt)
+    {
+        console.log("onTriggerChanged");
+        console.log(evt);
+    },
+
+    onTrackpadChanged: function (evt)
+    {
+        console.log("onTrackpadChanged");
+        console.log(evt);
+    },
+
     onHit: function (evt) 
     {
         var hitEl = evt.detail.el;
 
-        // If the element is already grabbed (it could be grabbed by another controller).
+        // If the element is already grabbed (it could be grabbed by another 
+        // controller).
         // If the hand is not grabbing the element does not stick.
         // If we're already grabbing something you can't grab again.
         if (!hitEl 
@@ -177,23 +204,13 @@ AFRAME.registerComponent('grab',
         hitEl.addState(this.GRABBED_STATE);
 
         this.hitEl = hitEl;
-
-        /*
-        var force, 
-            pStart = new THREE.Vector3().copy(this.el.getAttribute('position'));
-
-        // Compute direction of force, normalize, then scale.
-        force = hitEl.body.position.vsub(pStart);
-        force.normalize();
-        hitEl.body.applyImpulse(force, hitEl.body.position);
-        */
     },
 
     tick: function () 
     {
         var hitEl = this.hitEl;
 
-        var position;
+        var position, rotation, quaternion;
 
         if (!hitEl) 
         { 
@@ -206,14 +223,39 @@ AFRAME.registerComponent('grab',
 
         if (hitElBody)
         {
-            position = hitElBody.position;
+            hitElBody.position.x += this.deltaPosition.x;
+            hitElBody.position.y += this.deltaPosition.y;
+            hitElBody.position.z += this.deltaPosition.z;
 
+            rotation = new THREE.Euler(0, 0, 0, 'XZY');
+            //rotation = new THREE.Euler(0, 0, 0, 'YXZ');
+            //rotation = new THREE.Euler(0, 0, 0, 'YZX');
+            //rotation = new THREE.Euler(0, 0, 0, 'ZXY');
+
+            rotation.setFromQuaternion(hitElBody.quaternion);
+
+            rotation.x += THREE.Math.degToRad(this.deltaRotation.x);
+            rotation.y += THREE.Math.degToRad(this.deltaRotation.y);
+            rotation.z += THREE.Math.degToRad(this.deltaRotation.z);
+
+            quaternion = new THREE.Quaternion();
+
+            quaternion.setFromEuler(rotation);
+
+            hitElBody.quaternion.w = quaternion.w;
+            hitElBody.quaternion.x = quaternion.x;
+            hitElBody.quaternion.y = quaternion.y;
+            hitElBody.quaternion.z = quaternion.z;
+
+            console.log('-------------------------------');
+            console.log(this.deltaRotation);
+            console.log(rotation);
+            console.log(quaternion);
+            console.log(hitElBody.quaternion);
+
+            hitElBody.mass = 0;
             hitElBody.velocity.x = hitElBody.velocity.y = hitElBody.velocity.z = 0;
             hitElBody.angularVelocity.x = hitElBody.angularVelocity.y = hitElBody.angularVelocity.z = 0;
-            hitElBody.mass = 0;
-            hitElBody.position.x = position.x + this.deltaPosition.x;
-            hitElBody.position.y = position.y + this.deltaPosition.y;
-            hitElBody.position.z = position.z + this.deltaPosition.z;
         }
         else
         {
@@ -229,6 +271,7 @@ AFRAME.registerComponent('grab',
 
     updateDelta: function () 
     {
+        // Position.
         var currentPosition = this.el.getAttribute('position');
 
         var previousPosition = this.previousPosition || currentPosition;
@@ -241,5 +284,20 @@ AFRAME.registerComponent('grab',
 
         this.previousPosition = currentPosition;
         this.deltaPosition = deltaPosition;
+
+        // Rotation.
+        //var currentRotation = this.el.object3D.rotation;
+        var currentRotation = this.el.getAttribute('rotation');
+
+        var previousRotation = this.previousRotation || currentRotation;
+
+        var deltaRotation = {
+            x: currentRotation.x - previousRotation.x,
+            y: currentRotation.y - previousRotation.y,
+            z: currentRotation.z - previousRotation.z
+        };
+
+        this.previousRotation = currentRotation;
+        this.deltaRotation = deltaRotation;
     }
 });
